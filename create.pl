@@ -24,11 +24,11 @@ GetOptions (
 my $configname = $ARGV[0];
 usage() if not $configname;
 
-my $baseurl = $agent->{host};
 my $agent = new Akamai::Edgegrid(
 	config_file => "$ENV{HOME}/.edgerc",
 	section => $section,
 );
+my $baseurl = "https://" . $agent->{host};
 
 debug_ua($agent) if $debug;
 
@@ -93,6 +93,24 @@ die "Couldn't find rules" if not $content;
 my $rules = $resp->content;
 
 my $isSecure = $content->{rules}{options}{is_secure} == 1?"true":"false";
+my $cpcode;
+# search for cpcode in default rule
+foreach my $behaviour (@{$content->{rules}{behaviors}}) {
+	if ($behaviour->{name} eq "cpCode") {
+		$cpcode = $behaviour->{options}{value}{id};
+		last;
+	}
+}
+
+# Get CPCode Name
+print "Getting cpcode\n";
+my $req = HTTP::Request->new(GET => $baseurl . "/papi/v1/cpcodes/$cpcode?contractId=$contractId&groupId=$groupId");
+$req->content_type('application/json');
+
+my $resp = $agent->request($req);
+my $content = decode_json($resp->content);
+die "Couldn't find cpcode" if not $content;
+my $cpcodeName = $content->{cpcodes}{items}[0]->{cpcodeName};
 
 # Get hostnames
 print "Getting hostnames\n";
@@ -147,7 +165,7 @@ print $fh "resource \"akamai_cp_code\" \"default-cp-code\" {\n";
 print $fh "    product  = \"$productId\"\n";
 print $fh "    contract = data.akamai_contract.contract.id\n";
 print $fh "    group = data.akamai_group.group.id\n";
-print $fh "    name = \"DEFAULT\"\n";
+print $fh "    name = \"$cpcodeName\"\n";
 print $fh "}\n";
 print $fh "\n";
 
