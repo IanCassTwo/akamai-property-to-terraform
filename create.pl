@@ -24,7 +24,7 @@ GetOptions (
 my $configname = $ARGV[0];
 usage() if not $configname;
 
-my $baseurl = 'https://akab-3kmwnowcm57vwpsz-hdf6pii5vgnz7kwv.luna.akamaiapis.net';
+my $baseurl = $agent->{host};
 my $agent = new Akamai::Edgegrid(
 	config_file => "$ENV{HOME}/.edgerc",
 	section => $section,
