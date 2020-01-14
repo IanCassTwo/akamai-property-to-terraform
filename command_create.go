@@ -382,8 +382,14 @@ func saveTerraformDefinition(data TFData) error {
 		" }\n" +
   		" rules = data.template_file.rules.rendered\n" +
   		" is_secure = {{.IsSecure}}\n" +
+		"}\n" +
+		"\n" +
+		"resource \"akamai_property_activation\" \"{{.PropertyResourceName}}\" {\n" +
+        	" property = akamai_property.{{.PropertyResourceName}}.id\n" +
+        	" contact = [\"\"]\n" +
+        	" network = upper(var.env)\n" +
+        	" activate = true\n" +
 		"}\n")
-
 
 	if err != nil {
 		return err;
@@ -397,6 +403,19 @@ func saveTerraformDefinition(data TFData) error {
 	if err != nil {
 		return err;
 	}
+	f.Close()
+
+	// variables
+	f, err = os.Create("variables.tf")
+	if err != nil {
+		return err;
+	}
+
+	f.WriteString("variable \"env\" {\n")
+	f.WriteString(" default = \"staging\"\n")
+	f.WriteString("}\n")
+	f.Close()
+
 	return nil;
 }
 
