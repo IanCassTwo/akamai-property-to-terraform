@@ -6,7 +6,7 @@
   "commands": [
     {
       "name": "terraform",
-      "version": "0.0.1",
+      "version": "0.0.2",
       "description": "Create terraform configurations from Property Manager",
       "bin": "https://github.com/IanCassTwo/akamai-property-to-terraform/raw/master/build/akamai-{{.Name}}-{{.Version}}-{{.OS}}{{.Arch}}{{.BinSuffix}}",
       "auto-complete": true

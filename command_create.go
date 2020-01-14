@@ -30,6 +30,7 @@ import (
 	akamai "github.com/akamai/cli-common-golang"
 	"github.com/fatih/color"
 	"github.com/urfave/cli"
+	"github.com/janeczku/go-spinner"
 ) 
 
 type EdgeHostname struct {
@@ -77,31 +78,27 @@ func cmdCreate(c *cli.Context) error {
 
 	// Get Property
 	propertyName := c.Args().First()
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching property..."),
-		fmt.Sprintf("Fetching property...... [%s]", color.GreenString("OK")),
-	)
+	s := spinner.StartNew(fmt.Sprintf("Fetching property...."))
+
 	property := findProperty(propertyName);
 	if property == nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Property not found "), 1)
 	}
 
 	tfData.PropertyName = property.PropertyName
 	tfData.PropertyResourceName = strings.Replace(property.PropertyName, ".", "-", -1);
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching property...... [%s]\n", color.GreenString("OK"))
 
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching property rules..."),
-		fmt.Sprintf("Fetching property rules...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew(fmt.Sprintf("Fetching property rules..."))
 
 	// Get Property Rules
 	rules, err := property.GetRules();
 
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Property rules not found: ", err), 1)
 	}
 
@@ -124,66 +121,58 @@ func cmdCreate(c *cli.Context) error {
 	err = ioutil.WriteFile("rules.json", jsonBody, 0644)
 
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Can't write property rules: ", err), 1)
 	}
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching property rules...... [%s]\n", color.GreenString("OK"))
 
 	// Get Group
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching group..."),
-		fmt.Sprintf("Fetching group...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew( fmt.Sprintf("Fetching group..."))
 	group, err := getGroup(property.GroupID)
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Group not found: %s", err), 1)
 	}
 
 	tfData.GroupName = group.GroupName;
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching group...... [%s]\n", color.GreenString("OK"))
 
 	// Get Version
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching property version..."),
-		fmt.Sprintf("Fetching property version...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew(fmt.Sprintf("Fetching property version..."))
 	version, err := getVersion(property);
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Version not found: %s", err), 1)
 	}
 
 	tfData.ProductID = version.ProductID;
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching property version...... [%s]\n", color.GreenString("OK"))
 
 	// Get Product
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching product name..."),
-		fmt.Sprintf("Fetching product name...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew(fmt.Sprintf("Fetching product name..."))
 	product, err := getProduct(tfData.ProductID, property.Contract);
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Product not found: %s", err), 1)
 	}
 
 	tfData.ProductName = product.ProductName;
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching product name...... [%s]\n", color.GreenString("OK"))
 
 	// Get EdgeHostnames
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching hostnames..."),
-		fmt.Sprintf("Fetching hostnames...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew( fmt.Sprintf("Fetching hostnames..."))
 	hostnames, err := getHostnames(property, version);
 
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Hostnames not found: %s", err), 1)
 	}
 
@@ -208,35 +197,32 @@ func cmdCreate(c *cli.Context) error {
 
 	}
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching hostnames...... [%s]\n", color.GreenString("OK"))
 
 	// Get CPCode Name
-	akamai.StartSpinner(
-		fmt.Sprintf("Fetching CPCode name..."),
-		fmt.Sprintf("Fetching CPCode name...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew( fmt.Sprintf("Fetching CPCode name..."))
 	cpcodeName, err := getCPCode(property, tfData.CPCodeID);
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Product not found: %s", err), 1)
 	}
 
 	tfData.CPCodeName = cpcodeName;
 
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Fetching CPCode name...... [%s]\n", color.GreenString("OK"))
 
 
 	// Save file
-	akamai.StartSpinner(
-		fmt.Sprintf("Saving TF definition..."),
-		fmt.Sprintf("Saving TF definition...... [%s]", color.GreenString("OK")),
-	)
+	s = spinner.StartNew( fmt.Sprintf("Saving TF definition..."))
 	err = saveTerraformDefinition(tfData);
 	if err != nil {
-		akamai.StopSpinnerFail()
+		s.Stop()
 		return cli.NewExitError(color.RedString("Couldn't save tf file: %s", err), 1)
 	}
-	akamai.StopSpinnerOk()
+	s.Stop()
+	fmt.Printf("Saving TF definition...... [%s]\n", color.GreenString("OK"))
 
 	return nil;
 
