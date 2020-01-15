@@ -36,6 +36,8 @@ import (
 type EdgeHostname struct {
 	EdgeHostname			string
 	ProductName			string
+	ID				string
+	IPv6				string
 	EdgeHostnameResourceName	string
 }
 
@@ -170,7 +172,7 @@ func cmdCreate(c *cli.Context) error {
 	s.Stop()
 	fmt.Printf("Fetching product name...... [%s]\n", color.GreenString("OK"))
 
-	// Get EdgeHostnames
+	// Get Hostnames
 	s = spinner.StartNew( fmt.Sprintf("Fetching hostnames..."))
 	hostnames, err := getHostnames(property, version);
 
@@ -179,18 +181,18 @@ func cmdCreate(c *cli.Context) error {
 		return cli.NewExitError(color.RedString("Hostnames not found: %s", err), 1)
 	}
 
-	//edgeHostnamesR := []*EdgeHostname{}
-	//hostnamesR := []*Hostname{}
 	for _, hostname := range hostnames.Hostnames.Items {
 		_ = hostname
 		cnameTo := hostname.CnameTo
 		cnameFrom := hostname.CnameFrom
 		cnameToResource := strings.Replace(cnameTo, ".", "-", -1)
 
+
 		var edgeHostnameN EdgeHostname
 		edgeHostnameN.EdgeHostname = cnameTo
 		edgeHostnameN.EdgeHostnameResourceName = cnameToResource
 		edgeHostnameN.ProductName = product.ProductName 
+		edgeHostnameN.IPv6 = isIPv6(property, hostname.EdgeHostnameID)
 		tfData.EdgeHostnames[cnameToResource] = edgeHostnameN
 
 		var hostnamesN Hostname
@@ -238,6 +240,24 @@ func getHostnames(property *papi.Property, version *papi.Version) (*papi.Hostnam
 		return nil, err
 	}
 	return hostnames, nil
+}
+
+func isIPv6(property *papi.Property, ehn string) (string) {
+	edgeHostnames, err := papi.GetEdgeHostnames(property.Contract, property.Group, "")
+	if (err != nil) {
+		return "false"
+	}
+	for _, edgehostname := range edgeHostnames.EdgeHostnames.Items {
+		_ = edgehostname
+		if (edgehostname.EdgeHostnameID == ehn) {
+			if (edgehostname.IPVersionBehavior == "IPV4") {
+				return "false"
+			} else {
+				return "true"
+			}
+		}
+	}
+	return "false"
 }
 
 func getCPCode(property *papi.Property, cpCodeID string) (string, error) {
@@ -364,6 +384,7 @@ func saveTerraformDefinition(data TFData) error {
     		" product  = \"prd_{{.ProductName}}\"\n" +
     		" contract = data.akamai_contract.contract.id\n" +
     		" group = data.akamai_group.group.id\n" +
+		" ipv6 = {{.IPv6}}\n" +
     		" edge_hostname = \"{{.EdgeHostname}}\"\n" +
 		"}\n" +
 		"\n" +
