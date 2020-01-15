@@ -56,6 +56,7 @@ type TFData struct {
 	IsSecure		string
 	EdgeHostnames		map[string]EdgeHostname
 	Hostnames		map[string]Hostname
+	Section			string
 }
 
 func cmdCreate(c *cli.Context) error {
@@ -75,6 +76,8 @@ func cmdCreate(c *cli.Context) error {
 	var tfData TFData
 	tfData.EdgeHostnames = make(map[string]EdgeHostname)
 	tfData.Hostnames = make(map[string]Hostname)
+
+	tfData.Section = c.GlobalString("section")
 
 	// Get Property
 	propertyName := c.Args().First()
@@ -330,7 +333,7 @@ func saveTerraformDefinition(data TFData) error {
 	template, err := template.New("tf").Parse(
 		"provider \"akamai\" {\n" +
   		" edgerc = \"~/.edgerc\"\n" +
-  		" papi_section = \"papi\"\n" +
+  		" papi_section = \"{{.Section}}\"\n" +
 		"}\n" +
 		"\n" +
 		"\n" +
