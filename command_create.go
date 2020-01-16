@@ -59,6 +59,7 @@ type TFData struct {
 	EdgeHostnames		map[string]EdgeHostname
 	Hostnames		map[string]Hostname
 	Section			string
+	Emails			[]string
 }
 
 func cmdCreate(c *cli.Context) error {
@@ -78,6 +79,7 @@ func cmdCreate(c *cli.Context) error {
 	var tfData TFData
 	tfData.EdgeHostnames = make(map[string]EdgeHostname)
 	tfData.Hostnames = make(map[string]Hostname)
+	tfData.Emails = make([]string, 0)
 
 	tfData.Section = c.GlobalString("section")
 
@@ -218,6 +220,23 @@ func cmdCreate(c *cli.Context) error {
 	s.Stop()
 	fmt.Printf("Fetching CPCode name...... [%s]\n", color.GreenString("OK"))
 
+	// Get contact details
+	s = spinner.StartNew( fmt.Sprintf("Fetching contact details..."))
+	activations, err := property.GetActivations()
+	if err != nil {
+		tfData.Emails = append(tfData.Emails, "")
+	} else {
+		a, err := activations.GetLatestStagingActivation("")
+		if err != nil {
+			tfData.Emails = append(tfData.Emails, "")
+		} else {
+			tfData.Emails = a.NotifyEmails
+		}
+	}
+
+	s.Stop()
+	fmt.Printf("Fetching contact details...... [%s]\n", color.GreenString("OK"))
+
 
 	// Save file
 	s = spinner.StartNew( fmt.Sprintf("Saving TF definition..."))
@@ -227,6 +246,8 @@ func cmdCreate(c *cli.Context) error {
 		return cli.NewExitError(color.RedString("Couldn't save tf file: %s", err), 1)
 	}
 	s.Stop()
+
+
 	fmt.Printf("Saving TF definition...... [%s]\n", color.GreenString("OK"))
 
 	return nil;
@@ -410,7 +431,7 @@ func saveTerraformDefinition(data TFData) error {
 		"\n" +
 		"resource \"akamai_property_activation\" \"{{.PropertyResourceName}}\" {\n" +
         	" property = akamai_property.{{.PropertyResourceName}}.id\n" +
-        	" contact = [\"\"]\n" +
+        	" contact = [\"{{range $index, $element := .Emails}}{{if $index}},{{end}}{{$element}}{{end}}\"]\n" +
         	" network = upper(var.env)\n" +
         	" activate = true\n" +
 		"}\n")
