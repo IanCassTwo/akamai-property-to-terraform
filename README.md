@@ -1,15 +1,39 @@
-This assumes you already have a working CLI and Terraform installation.
+#Akamai Property Manager to Terraform Provider CLI plugin
 
- 
-Install using "akamai install https://github.com/IanCassTwo/akamai-property-to-terraform.git". Answer "Y" when it offers to install a binary
-Create a new empty subdirectory to hold your new Terraform configuration
+An [Akamai CLI](https://developer.akamai.com/cli) plugin for generating an [Akamai Terraform Provider](https://github.com/terraform-providers/terraform-provider-akamai) configuration from existing Property Manager configuration.
 
-Type "akamai terraform create (name of property manager config)"
+Note, these instructions assume you already have a working CLI and Terraform installation.
 
-Once it's done, do a "terraform init", followed by a "terraform apply
+## Getting Started
 
-The plugin allows some flags:-
+### Installing
 
-edgerc - define where your edgerc is. Defaults to your home directory
-section - which section to use in the edgerc. Defaults to "default"
-accountkey - which account key to use. You can leave this blank if you don't want to use account switching
+To install this package, use Akamai CLI:
+
+```sh
+$ akamai install https://github.com/IanCassTwo/akamai-property-to-terraform.git
+```
+ ## Usage
+ ```
+ Usage:
+  akamai terraform [global flags] command [command flags] [arguments...]
+
+Description:
+   Generate Terraform configs from your existing Property Manager configs
+
+Built-In Commands:
+  create
+  list
+  help
+
+Global Flags:
+   --edgerc value  Location of the credentials file (default: "/home/icass/.edgerc") [$AKAMAI_EDGERC]
+   --section value     Section of the credentials file (default: "default") [$AKAMAI_EDGERC_SECTION]
+   --accountkey value  Account switch key
+```
+
+1. Create a new empty subdirectory to hold your new Terraform configuration and change into it.
+2. ```akamai terraform create <name of property manager config>```
+3. ```terraform init```
+4. ```terraform apply```
+
