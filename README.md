@@ -1,4 +1,4 @@
-#Akamai Property Manager to Terraform Provider CLI plugin
+# Akamai Property Manager to Terraform Provider CLI plugin
 
 An [Akamai CLI](https://developer.akamai.com/cli) plugin for generating an [Akamai Terraform Provider](https://github.com/terraform-providers/terraform-provider-akamai) configuration from existing Property Manager configuration.
 
