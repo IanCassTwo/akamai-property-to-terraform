@@ -27,6 +27,7 @@ import (
 
 	"encoding/json"
 	"github.com/akamai/AkamaiOPEN-edgegrid-golang/papi-v1"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
 	akamai "github.com/akamai/cli-common-golang"
 	"github.com/fatih/color"
 	"github.com/urfave/cli"
@@ -46,6 +47,15 @@ type Hostname struct {
 	EdgeHostnameResourceName	string
 }
 
+type Variable struct {
+	client.Resource
+	Name        string 
+	Value       string
+	Description string
+	Hidden      bool 
+	Sensitive   bool
+}
+
 type TFData struct {
 	GroupName 		string
 	PropertyResourceName	string
@@ -60,6 +70,7 @@ type TFData struct {
 	Hostnames		map[string]Hostname
 	Section			string
 	Emails			[]string
+	Variables		[]Variable
 }
 
 func cmdCreate(c *cli.Context) error {
@@ -122,6 +133,21 @@ func cmdCreate(c *cli.Context) error {
 			tfData.CPCodeID = fmt.Sprintf("%.0f", value["id"].(float64))
 		}
 	}
+
+	// Get Variables
+	tfData.Variables = make([]Variable, 0)
+	for _, variable := range rules.Rule.Variables {
+		var v Variable
+		v.Name = variable.Name
+		v.Value = variable.Value
+		v.Description = variable.Description
+		v.Hidden = variable.Hidden
+		v.Sensitive = variable.Sensitive
+		tfData.Variables = append(tfData.Variables, v)
+	}
+
+	// Get Rule Format
+	tfData.RuleFormat = rules.RuleFormat
 
 	// Save Property Rules
 	jsonBody, err := json.MarshalIndent(rules, "", "  ")
@@ -411,6 +437,24 @@ func saveTerraformDefinition(data TFData) error {
 		"\n" +
 		"{{end}}" +
 
+		"{{if .Variables}}" +
+		"resource \"akamai_property_variables\" \"variables\" {\n" +
+		" variables {\n" +
+		"{{range .Variables}}" +
+		"  variable {\n" +
+    		"    name  = \"{{.Name}}\"\n" +
+    		"    value  = \"{{.Value}}\"\n" +
+    		"    description  = \"{{.Description}}\"\n" +
+    		"    hidden  = \"{{.Hidden}}\"\n" +
+    		"    sensitive  = \"{{.Sensitive}}\"\n" +
+		"{{end}}" +
+		"  }\n" +
+		" }\n" +
+		"}\n" +
+		"\n" +
+		"{{end}}" +
+	
+
 		"resource \"akamai_property\" \"{{.PropertyResourceName}}\" {\n" +
   		" name = \"{{.PropertyName}}\"\n" +
   		" cp_code = akamai_cp_code.{{.PropertyResourceName}}.id\n" +
@@ -427,6 +471,9 @@ func saveTerraformDefinition(data TFData) error {
 		" }\n" +
   		" rules = data.template_file.rules.rendered\n" +
   		" is_secure = {{.IsSecure}}\n" +
+		"{{if .Variables}}" +
+		" variables = akamai_property_variables.variables.json\n" +
+		"{{end}}" +
 		"}\n" +
 		"\n" +
 		"resource \"akamai_property_activation\" \"{{.PropertyResourceName}}\" {\n" +
