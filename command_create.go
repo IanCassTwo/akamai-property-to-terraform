@@ -447,8 +447,8 @@ func saveTerraformDefinition(data TFData) error {
     		"    description  = \"{{.Description}}\"\n" +
     		"    hidden  = \"{{.Hidden}}\"\n" +
     		"    sensitive  = \"{{.Sensitive}}\"\n" +
-		"{{end}}" +
 		"  }\n" +
+		"{{end}}" +
 		" }\n" +
 		"}\n" +
 		"\n" +
