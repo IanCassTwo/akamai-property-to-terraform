@@ -1,3 +1,7 @@
+# DEPRECATED
+
+This code was used to create https://github.com/akamai/cli-terraform
+
 # Akamai Property Manager to Terraform Provider CLI plugin
 
 An [Akamai CLI](https://developer.akamai.com/cli) plugin for generating an [Akamai Terraform Provider](https://github.com/terraform-providers/terraform-provider-akamai) configuration from existing Property Manager configuration.
